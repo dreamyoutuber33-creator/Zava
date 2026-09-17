@@ -1,0 +1,6 @@
+{
+  "name": "Hey Zava",
+  "description": "Intelligent Hindi, English & Hinglish AI Voice Assistant with hands-free wake word, conversational intent analysis, accessibility automation, and smart Android controls.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

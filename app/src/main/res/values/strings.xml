@@ -1,0 +1,49 @@
+<resources>
+    <string name="app_name">Hey Zava</string>
+    <string name="app_subtitle">AI Voice Assistant • Hindi + English</string>
+    <string name="wake_word_label">Hey Zava</string>
+    <string name="wake_word_prompt">Say “Hey Zava” or tap the microphone</string>
+    <string name="status_listening_wake">Listening for “Hey Zava”…</string>
+    <string name="status_wake_detected">“Hey Zava” Detected!</string>
+    <string name="status_listening_cmd">Listening for command…</string>
+    <string name="status_processing">Analyzing intent…</string>
+    <string name="status_executing">Executing action…</string>
+    <string name="status_completed">Action Completed</string>
+    <string name="status_failed">Execution Failed</string>
+    <string name="status_idle">Assistant Standby</string>
+
+    <string name="mic_ready">MICROPHONE\nREADY</string>
+    <string name="wake_ready">WAKE WORD\nHEY ZAVA</string>
+    <string name="accessibility_enabled">ACCESSIBILITY\nENABLED</string>
+    <string name="accessibility_disabled">ACCESSIBILITY\nDISABLED</string>
+    <string name="assistant_online">ASSISTANT\nONLINE</string>
+
+    <string name="recent_commands_title">Recent Commands</string>
+    <string name="quick_shortcuts_title">Quick Voice Shortcuts</string>
+    <string name="try_saying">Try saying: “Hey Zava, YouTube kholo”</string>
+    <string name="tap_to_speak">Tap to speak</string>
+    <string name="type_command_hint">Or type a command in Hindi or English…</string>
+    <string name="send">Send</string>
+
+    <string name="settings_title">Zava Settings</string>
+    <string name="history_title">Command History</string>
+    <string name="clear_history">Clear History</string>
+    <string name="no_history">No voice commands recorded yet.</string>
+
+    <string name="accessibility_service_label">Hey Zava Assistant Automation</string>
+    <string name="accessibility_service_description">Allows Hey Zava to automate user-requested Android UI actions like opening apps, clicking search, scrolling, and reading screen content upon voice command.</string>
+
+    <string name="notification_channel_name">Hey Zava Background Assistant</string>
+    <string name="notification_channel_desc">Shows active status when Hey Zava is listening for the wake word.</string>
+    <string name="notification_text">Active • Listening for “Hey Zava” across any app</string>
+    <string name="notification_action_mic">Trigger Mic</string>
+    <string name="notification_action_pause">Pause Zava</string>
+    <string name="notification_restricted_title">Microphone Access Restricted</string>
+    <string name="notification_restricted_text">Android restricted background audio. Tap to re-enable permission &amp; battery settings.</string>
+    
+    <string name="battery_optimization_title">Background Battery Saver</string>
+    <string name="battery_optimization_desc">Allow unrestricted background execution so “Hey Zava” stays active when device is locked or in other apps.</string>
+    <string name="battery_unrestricted">Unrestricted (Recommended)</string>
+    <string name="battery_restricted">Optimized / Restricted</string>
+    <string name="fix_mic_restriction">Re-enable Mic Access</string>
+</resources>

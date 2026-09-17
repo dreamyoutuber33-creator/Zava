@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="amoled_black">#06080D</color>
+    <color name="amoled_darker">#020305</color>
+    <color name="card_surface">#0F1522</color>
+    <color name="card_surface_glass">#182232</color>
+    <color name="card_surface_elevated">#1E2B3E</color>
+    <color name="card_border">#2C3B52</color>
+    <color name="card_border_glow">#4000F2FE</color>
+
+    <!-- Neon Accents -->
+    <color name="neon_cyan">#00F2FE</color>
+    <color name="neon_blue">#4FACFE</color>
+    <color name="neon_purple">#9B51E0</color>
+    <color name="neon_green">#00E676</color>
+    <color name="neon_coral">#FF4B72</color>
+    <color name="neon_amber">#FFB300</color>
+
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#CBD5E1</color>
+    <color name="text_muted">#64748B</color>
+
+    <color name="mic_idle">#182334</color>
+    <color name="mic_glow_start">#00F2FE</color>
+    <color name="mic_glow_end">#9B51E0</color>
+    <color name="mic_active">#FF3B69</color>
+
+    <!-- Legacy / Material aliases -->
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+</resources>

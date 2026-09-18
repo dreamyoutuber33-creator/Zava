@@ -2,6 +2,8 @@ package com.example;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.util.Log;
@@ -93,6 +95,24 @@ public class VoiceResponseManager implements TextToSpeech.OnInitListener {
         Bundle params = new Bundle();
         params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "ZAVA_" + System.currentTimeMillis());
         tts.speak(text, TextToSpeech.QUEUE_FLUSH, params, "ZAVA_" + System.currentTimeMillis());
+
+        // Safety fallback: ensure callback fires even if TTS engine drops the utterance
+        long timeoutMs = Math.max(2500, text.length() * 120L + 1500);
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            if (currentCallback == callback && callback != null) {
+                currentCallback = null;
+                callback.onSpeechCompleted();
+            }
+        }, timeoutMs);
+    }
+
+    public void speak(String text, Runnable onDone) {
+        speak(text, new SpeechCallback() {
+            @Override
+            public void onSpeechCompleted() {
+                if (onDone != null) onDone.run();
+            }
+        });
     }
 
     public void stop() {

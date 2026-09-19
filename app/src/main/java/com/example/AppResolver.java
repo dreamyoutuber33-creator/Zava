@@ -135,18 +135,42 @@ public class AppResolver {
 
         // 4. Special fallback mappings for known system apps if package queries are restricted
         PackageManager pm = context.getPackageManager();
-        if (target.contains("youtube")) {
+        if (target.contains("settings") || target.contains("सेटिंग्स")) {
+            Intent intent = new Intent(android.provider.Settings.ACTION_SETTINGS);
+            return new AppInfo("Settings", "com.android.settings", intent);
+        } else if (target.contains("wifi") || target.contains("wi-fi") || target.contains("वाईफाई")) {
+            Intent intent = new Intent(android.provider.Settings.ACTION_WIFI_SETTINGS);
+            return new AppInfo("Wi-Fi Settings", "com.android.settings", intent);
+        } else if (target.contains("bluetooth") || target.contains("ब्लूटूथ")) {
+            Intent intent = new Intent(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS);
+            return new AppInfo("Bluetooth Settings", "com.android.settings", intent);
+        } else if (target.contains("youtube") || target.contains("यूट्यूब")) {
             Intent intent = pm.getLaunchIntentForPackage("com.google.android.youtube");
-            if (intent != null) return new AppInfo("YouTube", "com.google.android.youtube", intent);
-        } else if (target.contains("whatsapp")) {
+            if (intent == null) {
+                intent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://www.youtube.com"));
+            }
+            return new AppInfo("YouTube", "com.google.android.youtube", intent);
+        } else if (target.contains("whatsapp") || target.contains("व्हाट्सएप") || target.contains("व्हाट्सऐप")) {
             Intent intent = pm.getLaunchIntentForPackage("com.whatsapp");
-            if (intent != null) return new AppInfo("WhatsApp", "com.whatsapp", intent);
-        } else if (target.contains("chrome")) {
+            if (intent == null) {
+                intent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://api.whatsapp.com"));
+            }
+            return new AppInfo("WhatsApp", "com.whatsapp", intent);
+        } else if (target.contains("chrome") || target.contains("क्रोम") || target.contains("browser")) {
             Intent intent = pm.getLaunchIntentForPackage("com.android.chrome");
-            if (intent != null) return new AppInfo("Chrome", "com.android.chrome", intent);
-        } else if (target.contains("camera")) {
+            if (intent == null) {
+                intent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://www.google.com"));
+            }
+            return new AppInfo("Chrome", "com.android.chrome", intent);
+        } else if (target.contains("camera") || target.contains("कैमरा")) {
             Intent intent = new Intent("android.media.action.IMAGE_CAPTURE");
             return new AppInfo("Camera", "camera", intent);
+        } else if (target.contains("maps") || target.contains("मैप्स")) {
+            Intent intent = pm.getLaunchIntentForPackage("com.google.android.apps.maps");
+            if (intent == null) {
+                intent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://maps.google.com"));
+            }
+            return new AppInfo("Google Maps", "com.google.android.apps.maps", intent);
         }
 
         return null;

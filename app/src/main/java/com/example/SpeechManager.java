@@ -13,13 +13,14 @@ import android.util.Log;
 import java.util.ArrayList;
 
 /**
- * Robust SpeechRecognizerManager for continuous "Always-On" voice recognition.
- * Fixes Android's 5-second silence timeout bug by automatically and cleanly restarting
- * listening without duplicate sessions, audio pipeline blockages, or memory leaks.
+ * Robust SpeechManager for persistent always-on voice recognition.
+ * Strictly guarantees all SpeechRecognizer creation, execution, and cancellation
+ * occur on the Main (Looper) Thread to prevent Android threading violations.
+ * Handles timeouts and recognizer busy states with safe delays and clean session teardowns.
  */
-public class SpeechRecognizerManager implements RecognitionListener {
+public class SpeechManager implements RecognitionListener {
 
-    private static final String TAG = "SpeechRecognizerMgr";
+    private static final String TAG = "SpeechManager";
 
     public interface SpeechListener {
         void onRmsChanged(float rmsdB);
@@ -30,20 +31,20 @@ public class SpeechRecognizerManager implements RecognitionListener {
     }
 
     private final Context context;
-    private final Handler handler = new Handler(Looper.getMainLooper());
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private SpeechRecognizer speechRecognizer;
-    private SpeechListener listener;
+    private SpeechRecognizerManager.SpeechListener listener;
 
     private boolean isListening = false;
     private boolean isContinuousMode = false;
     private boolean isPausedForTts = false;
     private boolean preferHindi = true;
 
-    // Safety watchdog: if onEndOfSpeech fires but onResults/onError never arrives, restart session cleanly
+    // Safety watchdog: restarts continuous listener if onEndOfSpeech fires without a terminal result
     private final Runnable speechEndWatchdog = () -> {
         if (isContinuousMode && !isPausedForTts) {
-            Log.d(TAG, "Watchdog triggered: restarting continuous listener session");
-            restartListeningWithDelay(150);
+            Log.d(TAG, "Speech end watchdog triggered: recycling session");
+            restartListeningWithDelay(500);
         }
     };
 
@@ -53,11 +54,11 @@ public class SpeechRecognizerManager implements RecognitionListener {
         }
     };
 
-    public SpeechRecognizerManager(Context context) {
+    public SpeechManager(Context context) {
         this.context = context.getApplicationContext();
     }
 
-    public void setListener(SpeechListener listener) {
+    public void setListener(SpeechRecognizerManager.SpeechListener listener) {
         this.listener = listener;
     }
 
@@ -80,51 +81,75 @@ public class SpeechRecognizerManager implements RecognitionListener {
     }
 
     public synchronized void pauseForTts() {
-        Log.d(TAG, "Pausing microphone recognition for TTS speech");
+        Log.d(TAG, "Pausing microphone recognition for TTS output");
         this.isPausedForTts = true;
-        handler.removeCallbacks(restartRunnable);
-        handler.removeCallbacks(speechEndWatchdog);
-        destroyRecognizerInternal();
+        mainHandler.removeCallbacks(restartRunnable);
+        mainHandler.removeCallbacks(speechEndWatchdog);
+        postToMain(this::destroyRecognizerInternal);
     }
 
     public synchronized void resumeAfterTts() {
-        Log.d(TAG, "Resuming microphone recognition after TTS finished");
+        Log.d(TAG, "Resuming microphone recognition after TTS completed");
         this.isPausedForTts = false;
         if (isContinuousMode) {
-            restartListeningWithDelay(250);
+            restartListeningWithDelay(500);
         }
     }
 
     public synchronized void startListening(boolean preferHindi) {
         this.preferHindi = preferHindi;
+        postToMain(this::startListeningInternal);
+    }
+
+    public synchronized void stopListening() {
+        this.isContinuousMode = false;
+        this.isPausedForTts = false;
+        mainHandler.removeCallbacks(restartRunnable);
+        mainHandler.removeCallbacks(speechEndWatchdog);
+        postToMain(this::destroyRecognizerInternal);
+    }
+
+    /**
+     * Executes runnable on Main Looper Thread strictly.
+     */
+    private void postToMain(Runnable runnable) {
         if (Looper.myLooper() == Looper.getMainLooper()) {
-            startListeningInternal();
+            runnable.run();
         } else {
-            handler.post(this::startListeningInternal);
+            mainHandler.post(runnable);
+        }
+    }
+
+    private void restartListeningWithDelay(long delayMs) {
+        mainHandler.removeCallbacks(restartRunnable);
+        if (isContinuousMode && !isPausedForTts) {
+            mainHandler.postDelayed(restartRunnable, delayMs);
         }
     }
 
     private void startListeningInternal() {
-        handler.removeCallbacks(restartRunnable);
-        handler.removeCallbacks(speechEndWatchdog);
+        mainHandler.removeCallbacks(restartRunnable);
+        mainHandler.removeCallbacks(speechEndWatchdog);
 
         if (isPausedForTts) {
             Log.d(TAG, "SpeechRecognizer is paused for TTS output; not starting.");
             return;
         }
 
+        // Clean up previous recognizer instance thoroughly
         destroyRecognizerInternal();
 
         if (!SpeechRecognizer.isRecognitionAvailable(context)) {
+            Log.e(TAG, "Speech recognition is not available on this device.");
             if (listener != null) {
-                listener.onSpeechError(-1, "Speech Recognition not available on this device.");
+                listener.onSpeechError(-1, "Speech Recognition is not available on this device.");
             }
             return;
         }
 
         try {
             speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context);
-            speechRecognizer.setRecognitionListener(SpeechRecognizerManager.this);
+            speechRecognizer.setRecognitionListener(this);
 
             Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
             intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
@@ -132,7 +157,7 @@ public class SpeechRecognizerManager implements RecognitionListener {
             intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);
             intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, context.getPackageName());
 
-            // Provide ample silence timeouts
+            // Provide ample silence lengths before speech timeout
             intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 4000L);
             intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 3000L);
             intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 1500L);
@@ -148,34 +173,16 @@ public class SpeechRecognizerManager implements RecognitionListener {
 
             speechRecognizer.startListening(intent);
             isListening = true;
-            Log.d(TAG, "SpeechRecognizer started. Continuous=" + isContinuousMode);
+            Log.d(TAG, "SpeechRecognizer successfully started on Main Thread.");
         } catch (Exception e) {
-            Log.e(TAG, "Error starting SpeechRecognizer", e);
+            Log.e(TAG, "Exception starting SpeechRecognizer", e);
             isListening = false;
+            destroyRecognizerInternal();
             if (isContinuousMode && !isPausedForTts) {
                 restartListeningWithDelay(1000);
             } else if (listener != null) {
                 listener.onSpeechError(-2, "Mic start failed: " + e.getMessage());
             }
-        }
-    }
-
-    public synchronized void stopListening() {
-        isContinuousMode = false;
-        isPausedForTts = false;
-        handler.removeCallbacks(restartRunnable);
-        handler.removeCallbacks(speechEndWatchdog);
-        if (Looper.myLooper() == Looper.getMainLooper()) {
-            destroyRecognizerInternal();
-        } else {
-            handler.post(this::destroyRecognizerInternal);
-        }
-    }
-
-    private void restartListeningWithDelay(long delayMs) {
-        handler.removeCallbacks(restartRunnable);
-        if (isContinuousMode && !isPausedForTts) {
-            handler.postDelayed(restartRunnable, delayMs);
         }
     }
 
@@ -185,7 +192,9 @@ public class SpeechRecognizerManager implements RecognitionListener {
                 speechRecognizer.stopListening();
                 speechRecognizer.cancel();
                 speechRecognizer.destroy();
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                Log.w(TAG, "Exception destroying SpeechRecognizer", e);
+            }
             speechRecognizer = null;
         }
         isListening = false;
@@ -223,30 +232,32 @@ public class SpeechRecognizerManager implements RecognitionListener {
     public void onEndOfSpeech() {
         isListening = false;
         if (isContinuousMode && !isPausedForTts) {
-            handler.removeCallbacks(speechEndWatchdog);
-            handler.postDelayed(speechEndWatchdog, 2500);
+            mainHandler.removeCallbacks(speechEndWatchdog);
+            mainHandler.postDelayed(speechEndWatchdog, 2500);
         }
     }
 
     @Override
     public void onError(int error) {
         isListening = false;
-        handler.removeCallbacks(speechEndWatchdog);
-        Log.d(TAG, "SpeechRecognizer onError: " + error);
+        mainHandler.removeCallbacks(speechEndWatchdog);
+        Log.d(TAG, "SpeechRecognizer onError: code " + error);
 
-        // In continuous mode, timeout (6) and no-match (7) mean the user was silent.
-        // Cleanly restart the listening loop without stopping or notifying an error.
+        // In continuous always-on listening, timeout (6) and no-match (7) indicate silence.
+        // Cleanly cancel & recreate with 500ms delay to avoid CPU loops or sound glitches.
         if (isContinuousMode && !isPausedForTts) {
-            if (error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT || error == SpeechRecognizer.ERROR_NO_MATCH) {
-                restartListeningWithDelay(150);
+            if (error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT ||
+                    error == SpeechRecognizer.ERROR_NO_MATCH) {
+                destroyRecognizerInternal();
+                restartListeningWithDelay(500);
                 return;
             } else if (error == SpeechRecognizer.ERROR_RECOGNIZER_BUSY ||
                     error == SpeechRecognizer.ERROR_CLIENT ||
                     error == SpeechRecognizer.ERROR_SERVER_DISCONNECTED ||
                     error == SpeechRecognizer.ERROR_NETWORK ||
                     error == SpeechRecognizer.ERROR_NETWORK_TIMEOUT) {
-                // Recoverable audio or network glitch: backoff and restart
-                restartListeningWithDelay(500);
+                destroyRecognizerInternal();
+                restartListeningWithDelay(750);
                 return;
             }
         }
@@ -273,12 +284,17 @@ public class SpeechRecognizerManager implements RecognitionListener {
         if (listener != null) {
             listener.onSpeechError(error, message);
         }
+
+        if (isContinuousMode && !isPausedForTts) {
+            destroyRecognizerInternal();
+            restartListeningWithDelay(1000);
+        }
     }
 
     @Override
     public void onResults(Bundle results) {
         isListening = false;
-        handler.removeCallbacks(speechEndWatchdog);
+        mainHandler.removeCallbacks(speechEndWatchdog);
 
         ArrayList<String> matches = results != null ? results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION) : null;
         if (matches != null && !matches.isEmpty()) {
@@ -293,7 +309,8 @@ public class SpeechRecognizerManager implements RecognitionListener {
 
         // Empty match in continuous mode: cycle recognizer cleanly
         if (isContinuousMode && !isPausedForTts) {
-            restartListeningWithDelay(150);
+            destroyRecognizerInternal();
+            restartListeningWithDelay(500);
         } else if (listener != null) {
             listener.onSpeechError(SpeechRecognizer.ERROR_NO_MATCH, "Koi speech recognize nahi hua.");
         }

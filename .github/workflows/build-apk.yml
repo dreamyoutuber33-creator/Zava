@@ -66,10 +66,10 @@ jobs:
           fi
           echo "Temporary debug.keystore verified successfully."
 
-      - name: Build the debug APK
+      - name: Build Debug APK
         run: gradle :app:assembleDebug --stacktrace --no-daemon
 
-      - name: Verify the APK
+      - name: Verify APK
         run: |
           EXPECTED_APK="app/build/outputs/apk/debug/app-debug.apk"
           if [ ! -f "$EXPECTED_APK" ]; then

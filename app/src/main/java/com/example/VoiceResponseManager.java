@@ -77,6 +77,10 @@ public class VoiceResponseManager implements TextToSpeech.OnInitListener {
         }
     }
 
+    public void speak(String text) {
+        speak(text, (SpeechCallback) null);
+    }
+
     public void speak(String text, SpeechCallback callback) {
         this.currentCallback = callback;
         if (!isInitialized || tts == null || text == null || text.trim().isEmpty()) {
@@ -104,15 +108,6 @@ public class VoiceResponseManager implements TextToSpeech.OnInitListener {
                 callback.onSpeechCompleted();
             }
         }, timeoutMs);
-    }
-
-    public void speak(String text, Runnable onDone) {
-        speak(text, new SpeechCallback() {
-            @Override
-            public void onSpeechCompleted() {
-                if (onDone != null) onDone.run();
-            }
-        });
     }
 
     public void stop() {

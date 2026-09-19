@@ -78,6 +78,60 @@
                 </LinearLayout>
             </RelativeLayout>
 
+            <!-- Master Voice Assistant Always-On Switch -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardMasterSwitch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="14dp"
+                app:cardBackgroundColor="@color/card_surface"
+                app:cardCornerRadius="18dp"
+                app:strokeColor="@color/card_border"
+                app:strokeWidth="1.5dp">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="18dp"
+                    android:paddingVertical="14dp">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true"
+                        android:layout_toStartOf="@+id/switchVoiceAssistant"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvSwitchTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Voice Assistant: ON"
+                            android:textColor="@color/neon_cyan"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvSwitchSubtitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Always-on continuous listening active"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <com.google.android.material.materialswitch.MaterialSwitch
+                        android:id="@+id/switchVoiceAssistant"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:checked="true" />
+                </RelativeLayout>
+            </com.google.android.material.card.MaterialCardView>
+
             <!-- Main Interactive Voice Visualizer Stage -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
@@ -86,7 +140,7 @@
                 app:cardCornerRadius="24dp"
                 app:strokeColor="@color/card_border_glow"
                 app:strokeWidth="1.5dp"
-                android:layout_marginBottom="18dp">
+                android:layout_marginBottom="14dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -129,16 +183,37 @@
                         android:textSize="18sp"
                         android:textStyle="italic" />
 
-                    <!-- User Spoken Text preview -->
-                    <TextView
-                        android:id="@+id/tvUserSpeechPreview"
+                    <!-- Live Speech Caption Container -->
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:gravity="center"
-                        android:text="Say “Hey Zava, YouTube kholo”"
-                        android:textColor="@color/text_muted"
-                        android:textSize="13sp" />
+                        android:orientation="vertical"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center_horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="LIVE SPEECH CAPTIONS"
+                            android:textColor="@color/neon_cyan"
+                            android:textSize="10sp"
+                            android:letterSpacing="0.08"
+                            android:textStyle="bold"
+                            android:background="@drawable/bg_status_pill"
+                            android:paddingHorizontal="10dp"
+                            android:paddingVertical="3dp"
+                            android:layout_marginBottom="4dp" />
+
+                        <TextView
+                            android:id="@+id/tvUserSpeechPreview"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="Say “Hey Zava, YouTube kholo”"
+                            android:textColor="@color/text_muted"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
 
                     <!-- Animated Mic Button -->
                     <FrameLayout
@@ -168,6 +243,62 @@
                         android:textColor="@color/text_secondary"
                         android:textSize="12sp" />
 
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Real-Time Speech Captions & Conversation Feed -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="14dp"
+                app:cardBackgroundColor="@color/card_surface_glass"
+                app:cardCornerRadius="20dp"
+                app:strokeColor="@color/card_border"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentStart="true"
+                            android:layout_centerVertical="true"
+                            android:letterSpacing="0.08"
+                            android:text="LIVE SPEECH &amp; CONVERSATION FEED"
+                            android:textColor="@color/neon_cyan"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/btnClearCaptions"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentEnd="true"
+                            android:layout_centerVertical="true"
+                            android:background="?attr/selectableItemBackground"
+                            android:paddingHorizontal="8dp"
+                            android:paddingVertical="4dp"
+                            android:text="Clear"
+                            android:textColor="@color/text_muted"
+                            android:textSize="11sp" />
+                    </RelativeLayout>
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvCaptionsFeed"
+                        android:layout_width="match_parent"
+                        android:layout_height="180dp"
+                        android:nestedScrollingEnabled="false"
+                        android:overScrollMode="never"
+                        android:scrollbars="vertical" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
